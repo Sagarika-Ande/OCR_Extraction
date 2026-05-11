@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Depends,Request, Header, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import socket
 from io import BytesIO
@@ -69,7 +70,18 @@ def whoami():
     return {"hostname": socket.gethostname()}
 
 
-# FastAPI route to handle the image upload and OCR extraction
+@app1.get("/")
+async def serve_index():
+    """Serve the front-end HTML"""
+    try:
+        return FileResponse("index.html", media_type="text/html")
+    except FileNotFoundError:
+        return JSONResponse(
+            content={"error": "Frontend not found. Please ensure index.html is in the project root directory."},
+            status_code=404
+        )
+
+
 @app1.post("/extract_passport_details")
 @limiter.limit("5/minute")  # Limit to 5 requests per minute
 async def extract_pass_details(request: Request,image: UploadFile = File(...), _: None = Depends(verify_token)):
